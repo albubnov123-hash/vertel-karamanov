@@ -1,55 +1,63 @@
 (() => {
-  const header = document.querySelector('.top');
-  const onScroll = () => header.classList.toggle('is-stuck', window.scrollY > 40);
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('is-scrolled', window.scrollY > 8);
   onScroll();
   addEventListener('scroll', onScroll, { passive: true });
 
   const burger = document.getElementById('burger');
-  const nav = document.getElementById('nav');
-  if (burger && nav) {
-    const close = () => { nav.classList.remove('is-open'); burger.setAttribute('aria-expanded', 'false'); };
+  const links = document.getElementById('navLinks');
+  if (burger && links) {
     burger.addEventListener('click', () => {
-      const open = nav.classList.toggle('is-open');
+      const open = links.classList.toggle('is-open');
       burger.setAttribute('aria-expanded', String(open));
       document.body.style.overflow = open ? 'hidden' : '';
     });
-    nav.addEventListener('click', (e) => {
-      if (e.target.tagName === 'A') { close(); document.body.style.overflow = ''; }
+    links.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A') {
+        links.classList.remove('is-open');
+        burger.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      }
     });
-    addEventListener('keydown', (e) => { if (e.key === 'Escape') { close(); document.body.style.overflow = ''; } });
+    addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      links.classList.remove('is-open');
+      burger.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    });
   }
 
-  const items = document.querySelectorAll('.reveal');
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce || !('IntersectionObserver' in window)) {
-    items.forEach((el) => el.classList.add('is-in'));
-  } else {
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        const el = entry.target;
-        const siblings = Array.from(el.parentElement.children).filter((c) => c.classList.contains('reveal'));
-        const i = siblings.indexOf(el);
-        el.style.transitionDelay = Math.min(i, 3) * 70 + 'ms';
-        el.classList.add('is-in');
-        io.unobserve(el);
-      });
-    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.08 });
-    items.forEach((el) => io.observe(el));
-  }
-
-  // video: don't fight low-power / data-saver modes
-  const v = document.querySelector('.hero__vid');
-  if (v) {
-    const conn = navigator.connection;
-    if (conn && (conn.saveData || /2g/.test(conn.effectiveType || ''))) {
-      v.removeAttribute('autoplay'); v.pause();
-    }
-  }
-
-  // FAQ: only one open at a time
-  const faq = document.querySelectorAll('.faq details');
-  faq.forEach((d) => d.addEventListener('toggle', () => {
-    if (d.open) faq.forEach((o) => { if (o !== d) o.open = false; });
+  // FAQ: keep one panel open
+  const items = [...document.querySelectorAll('.faq details')];
+  items.forEach((d) => d.addEventListener('toggle', () => {
+    if (d.open) items.forEach((o) => { if (o !== d) o.open = false; });
   }));
+
+  // gallery: drag-to-scroll with the mouse, arrow keys on the strip
+  const strip = document.getElementById('strip');
+  if (strip) {
+    let down = false, startX = 0, startLeft = 0;
+    strip.addEventListener('pointerdown', (e) => {
+      down = true; startX = e.clientX; startLeft = strip.scrollLeft;
+      strip.setPointerCapture(e.pointerId);
+    });
+    strip.addEventListener('pointermove', (e) => {
+      if (!down) return;
+      strip.scrollLeft = startLeft - (e.clientX - startX);
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) =>
+      strip.addEventListener(ev, () => { down = false; }));
+    strip.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') strip.scrollBy({ left: 360, behavior: 'smooth' });
+      if (e.key === 'ArrowLeft') strip.scrollBy({ left: -360, behavior: 'smooth' });
+    });
+  }
+
+  // save data / slow network: don't autoplay the hero video
+  const v = document.querySelector('.hero__video');
+  const conn = navigator.connection;
+  if (v && conn && (conn.saveData || /2g/.test(conn.effectiveType || ''))) {
+    v.removeAttribute('autoplay');
+    v.pause();
+  }
 })();
