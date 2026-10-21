@@ -50,6 +50,7 @@ a{color:inherit;text-decoration:none}
 ::-webkit-scrollbar-thumb{background:#3a332c;border-radius:0}
 ::-webkit-scrollbar-thumb:hover{background:#4d443a}
 
+section[id]{scroll-margin-top:84px}
 .wrap{width:100%;max-width:var(--wrap);margin-inline:auto;padding-inline:var(--pad)}
 .wrap--narrow{max-width:900px}
 .skip{position:absolute;left:-9999px;top:0;background:var(--ember);color:#fff;padding:12px 18px;z-index:100}
